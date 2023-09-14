@@ -2,34 +2,34 @@ const menu = require('./menu.json');
 
 const getMenu = (_, res) => {
     res.json({
-        menu 
+        menu
     });
 }
 
 const getMenuItem = (req, res) => {
     const { id } = req.params;
-    const menuItem = menu.find(item => item.id === id);
+    const item = menu.find(where => where.id == id);
     res.json({
-        menuItem
+        item
     });
 }
 
 const getCombos = (_, res) => {
-    const combos = menu.filter(item => item.combo);
+    const combos = menu.filter(where => where.tipo == "combo");
     res.json({
         combos
     });
 }
 
 const getPrincipales = (_, res) => {
-    const principales = menu.filter(item => item.principal);
+    const principales = menu.filter(where => where.tipo == "principal");
     res.json({
         principales
     });
 }
 
 const getPostres = (_, res) => {
-    const postres = menu.filter(item => item.postre)
+    const postres = menu.filter(where => where.tipo == "postre")
     res.json({
         postres
     });
@@ -38,8 +38,8 @@ const getPostres = (_, res) => {
 const postPedido = (req, res) => {
     const pedido = req.productos.length
     const platos = [];
-    for (let i; i < pedido; i++){
-    platos.push(productos[i]);
+    for (let i; i < pedido; i++) {
+        platos.push(productos[i]);
     }
     res.json(platos);
 }
