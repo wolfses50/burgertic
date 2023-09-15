@@ -63,7 +63,7 @@ const postPedido = (req, res) => {
     const idNoExistente = ids.filter(id => !idMenu.includes(id));
     if (idNoExistente.length > 0) {
         res.status(404).json({
-            msg: `Los siguientes id's no existen: ${idsNoExistentes.join(", ")}`
+            msg: `Los siguientes id's no existen: ${idNoExistente.join(", ")}`
         });
         return;
     }
