@@ -79,4 +79,5 @@ const postPedido = (req, res) => {
     });
 }
 
+//exporto todas las funciones para poder llamarlas desde el router.js
 module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido }
