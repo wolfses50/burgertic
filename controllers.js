@@ -1,4 +1,12 @@
-const menu = require('./menu.json');
+const { connect } = require("./router");
+
+const menu = mysql.query('SELECT * FROM platos', (err, result) => {
+    if (err) {
+        console.error(err);
+    } else {
+        console.log(`menu establecido`);
+    }
+});
 
 const getMenu = (_, res) => {
     //mando el menu completo
@@ -12,7 +20,13 @@ const getMenuItem = (req, res) => {
     const { id } = req.params;
 
     //busco en el menu el objeto que tenga el id de antes
-    const item = menu.find(where => where.id == id);
+    const item = connection.query('SELECT * FROM platos WHERE id' ,[id], (err, result) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log(`Inserted item with ID ${id}`);
+        }
+    });
 
     //si no existe el item, mando not found
     if (!item) {
@@ -56,6 +70,13 @@ const postPedido = (req, res) => {
     const { productos } = req.body;
     const ids = productos.map(plato => plato.id);
     const idMenu = menu.map(plato => plato.id);
+
+    if (!productos) {
+        res.status(400).json({
+            msg: "El pedido debe tener productos"
+        });
+        return;
+    }
 
     /*Aca agarro los id de los productos que me mandaron y los comparo con 
     los id del menu pre-existente para saber si existen de verdad*/
