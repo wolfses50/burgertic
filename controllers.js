@@ -1,6 +1,15 @@
 const { connect } = require("./router");
 
-const menu = mysql.query('SELECT * FROM platos', (err, result) => {
+const mysql = require('mysql2');
+
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'burgertic'
+  });
+
+const menu = connection.query('SELECT * FROM platos', (err, _) => {
     if (err) {
         console.error(err);
     } else {
@@ -10,8 +19,13 @@ const menu = mysql.query('SELECT * FROM platos', (err, result) => {
 
 const getMenu = (_, res) => {
     //mando el menu completo
+    connection.query('SELECT * FROM platos', (err, result) => {
+        if (err) {
+            console.error(err);
+        }
     res.status(200).json({
-        menu
+        result
+});
     });
 }
 
@@ -20,56 +34,64 @@ const getMenuItem = (req, res) => {
     const { id } = req.params;
 
     //busco en el menu el objeto que tenga el id de antes
-    const item = connection.query('SELECT * FROM platos WHERE id' ,[id], (err, result) => {
+    connection.query('SELECT * FROM platos WHERE id = ?' ,[id], (err, result) => {
         if (err) {
             console.error(err);
-        } else {
-            console.log(`Inserted item with ID ${id}`);
         }
-    });
-
-    //si no existe el item, mando not found
-    if (!item) {
-        res.status(404).json({
-            msg: "No se ha encontrado el item"
-        });
-        return;
-    }
-
+        //si no existe el item, mando not found
+        if (!result[0]) {
+            res.status(404).json({
+                msg: "No se ha encontrado el item"
+            });
+            return;
+        }
     //si existe, mando el item
-    res.status(200).json({
-        item
+    res.status(200).json(result[0]);
     });
 }
 
 const getCombos = (_, res) => {
     //busca todos los objetos del menu que tengan el atributo "tipo" como combo
-    const combos = menu.filter(where => where.tipo == "combo");
+    connection.query('SELECT * FROM platos WHERE tipo = "combo"', (err, result) => {
+        if (err) {
+            console.error(err);
+        }
     res.status(200).json({
-        combos
+        result
     });
+});
 }
 
 const getPrincipales = (_, res) => {
     //busca todos los objetos del menu que tengan el atributo "tipo" como principal
-    const principales = menu.filter(where => where.tipo == "principal");
+    connection.query('SELECT * FROM platos WHERE tipo = "principal"', (err, result) => {
+        if (err) {
+            console.error(err);
+        }
     res.status(200).json({
-        principales
+        result
     });
+});
 }
 
 const getPostres = (_, res) => {
     //busca todos los objetos del menu que tengan el atributo "tipo" como postre
-    const postres = menu.filter(where => where.tipo == "postre")
+    connection.query('SELECT * FROM platos WHERE tipo = "postre"', (err, result) => {
+        if (err) {
+            console.error(err);
+        }
     res.status(200).json({
-        postres
+        result
+    });
     });
 }
 
 const postPedido = (req, res) => {
+    menu = mysql.query('SELECT * FROM platos', (err, result));
     const { productos } = req.body;
     const ids = productos.map(plato => plato.id);
     const idMenu = menu.map(plato => plato.id);
+
 
     if (!productos) {
         res.status(400).json({
