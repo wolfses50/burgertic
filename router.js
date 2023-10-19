@@ -2,6 +2,8 @@ const express = require('express');
 
 const controllers = require('./controllers');
 
+const { connection } = require('./db');
+
 const router = express.Router();
 
 /*llamo las rutas con las funciones del controllers.js

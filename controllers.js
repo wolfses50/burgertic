@@ -1,31 +1,18 @@
-const { connect } = require("./router");
-
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'burgertic'
-  });
-
-const menu = connection.query('SELECT * FROM platos', (err, _) => {
-    if (err) {
-        console.error(err);
-    } else {
-        console.log(`menu establecido`);
-    }
-});
+const connection = require('./db');
+const nodemon = require('nodemon');
 
 const getMenu = (_, res) => {
     //mando el menu completo
+    console.log(connection)
     connection.query('SELECT * FROM platos', (err, result) => {
         if (err) {
             console.error(err);
         }
-    res.status(200).json({
-        result
-});
+        else {
+    res.status(200).json({ result });
+        }
     });
 }
 
@@ -86,12 +73,19 @@ const getPostres = (_, res) => {
     });
 }
 
-const postPedido = (req, res) => {
-    menu = mysql.query('SELECT * FROM platos', (err, result));
+
+async function postPedido(req, res) {
+    const [rows] = await connection.query('SELECT * FROM platos');
+    const menu = rows.map(row => ({
+    id: row.id,
+    precio: row.precio
+}));
+
+
     const { productos } = req.body;
     const ids = productos.map(plato => plato.id);
-    const idMenu = menu.map(plato => plato.id);
 
+    const idMenu = menu.map(plato => plato.id);
 
     if (!productos) {
         res.status(400).json({
