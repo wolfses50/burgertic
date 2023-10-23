@@ -14,5 +14,6 @@ router.get('/combos', controllers.getCombos);
 router.get('/principales', controllers.getPrincipales);
 router.get('/postres', controllers.getPostres);
 router.post('/pedido', controllers.postPedido);
+router.get('/pedidos/:id', controllers.getPedidos);
 
 module.exports = router;

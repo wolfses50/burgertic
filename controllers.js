@@ -1,7 +1,20 @@
-const mysql = require('mysql2');
-
 const connection = require('./db');
-const nodemon = require('nodemon');
+
+const menu = async (_, res) => {
+    try {
+        const [rows] = await connection.promise().query('SELECT * FROM platos');
+        const menu = rows.map(row => ({
+            id: row.id,
+            precio: row.precio
+        }));
+        res.status(200).json(menu);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            msg: "Error al obtener el menú"
+        });
+    }
+};
 
 const getMenu = (_, res) => {
     //mando el menu completo
@@ -11,7 +24,7 @@ const getMenu = (_, res) => {
             console.error(err);
         }
         else {
-    res.status(200).json({ result });
+            res.status(200).json({ result });
         }
     });
 }
@@ -21,7 +34,7 @@ const getMenuItem = (req, res) => {
     const { id } = req.params;
 
     //busco en el menu el objeto que tenga el id de antes
-    connection.query('SELECT * FROM platos WHERE id = ?' ,[id], (err, result) => {
+    connection.query('SELECT * FROM platos WHERE id = ?', [id], (err, result) => {
         if (err) {
             console.error(err);
         }
@@ -32,8 +45,8 @@ const getMenuItem = (req, res) => {
             });
             return;
         }
-    //si existe, mando el item
-    res.status(200).json(result[0]);
+        //si existe, mando el item
+        res.status(200).json(result[0]);
     });
 }
 
@@ -43,10 +56,10 @@ const getCombos = (_, res) => {
         if (err) {
             console.error(err);
         }
-    res.status(200).json({
-        result
+        res.status(200).json({
+            result
+        });
     });
-});
 }
 
 const getPrincipales = (_, res) => {
@@ -55,10 +68,10 @@ const getPrincipales = (_, res) => {
         if (err) {
             console.error(err);
         }
-    res.status(200).json({
-        result
+        res.status(200).json({
+            result
+        });
     });
-});
 }
 
 const getPostres = (_, res) => {
@@ -67,54 +80,93 @@ const getPostres = (_, res) => {
         if (err) {
             console.error(err);
         }
-    res.status(200).json({
-        result
-    });
+        res.status(200).json({
+            result
+        });
     });
 }
-
 
 async function postPedido(req, res) {
-    const [rows] = await connection.query('SELECT * FROM platos');
-    const menu = rows.map(row => ({
-    id: row.id,
-    precio: row.precio
-}));
-
-
+    //llamo lo que me llego de la request como un array de productos
     const { productos } = req.body;
-    const ids = productos.map(plato => plato.id);
 
-    const idMenu = menu.map(plato => plato.id);
-
-    if (!productos) {
-        res.status(400).json({
-            msg: "El pedido debe tener productos"
+    //Reviso si el array no esta vacio
+    if (!productos || !Array.isArray(productos)) {
+        return res.status(400).json({
+            msg: "La solicitud debe incluir un array de productos."
         });
-        return;
     }
 
-    /*Aca agarro los id de los productos que me mandaron y los comparo con 
-    los id del menu pre-existente para saber si existen de verdad*/
+    //agarro todas las filas de la tabla platos
+    const [rows] = await connection.promise().query('SELECT * FROM platos');
+    //meto esas filas en un array pero como solo con el id y el precio
+    const menu = rows.map(row => ({
+        id: row.id,
+        precio: row.precio
+    }));
 
-    const idNoExistente = ids.filter(id => !idMenu.includes(id));
-    if (idNoExistente.length > 0) {
-        res.status(404).json({
-            msg: `Los siguientes id's no existen: ${idNoExistente.join(", ")}`
+    let precioTotal = 0;
+    let idsNoExistentes = [];
+
+    /*
+    aca menuItem es un booleano y si el item existe en la base de datos lo agrego, 
+    y si no lo meto en otro arrat para items no existentes
+    */
+
+    productos.forEach((producto) => {
+        let menuItem = menu.find((item) => item.id === producto.id);
+
+        if (menuItem) {
+            precioTotal += menuItem.precio * producto.cantidad;
+        } else {
+            idsNoExistentes.push(producto.id);
+        }
+    });
+
+    //si el array de items no existentes tiene un objeto que haga return
+    if (idsNoExistentes.length > 0) {
+        return res.status(400).json({
+            msg: "Los siguientes ids no existen en el menú: " + idsNoExistentes.join(", ")
         });
-        return;
     }
-    const pedido = productos.map(plato => menu.find(where => where.id == plato.id));
-    const total = pedido.reduce((acc, plato) => acc + plato.precio, 0);
+    let pedidoID;
+    connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
+        if (err) {
+            console.error(err);
+        }
+        conosole.log(response)
+        pedidoID = response.insertId;
+    });
+    for (let i = 0; i < productos.length; i++) {
+        connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, producto[i].id, producto[i].cantidad], (err, _) => {
+        if(err) {
+            console.error(err);
+        }
+    });
+    }
 
-    /*suma los precios de los platos, acc siendo acumulacion, plato el plato que se esta 
-    agarrando en el momento y 0 es el valor inicial de acc */
-
-    res.status(200).json({
-        msg: "Pedido realizado con éxito",
-        total
+    return res.status(200).json({
+        msg: "Pedido recibido",
+        precio: precioTotal
     });
 }
 
+const getPedidos = (req, res) => {
+    //agarro el id que quiero del /:id de los params
+    const { id } = req.params;
+    connection.query('SELECT * FROM pedidos WHERE id = ?', [id], (err, result) => {
+        if (err) {
+            console.error(err);
+        }
+        //pido la posicion 0 en el array porque es el unico pedido con ese id
+        if (!result[0]) {
+            res.status(404).json({
+                msg: "No se ha encontrado el pedido"
+            });
+            return;
+        }
+        res.status(200).json(result[0]);
+    });
+}
 //exporto todas las funciones para poder llamarlas desde el router.js
-module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido }
+module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido, getPedidos };
