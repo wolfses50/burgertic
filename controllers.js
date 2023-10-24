@@ -1,21 +1,5 @@
 const connection = require('./db');
 
-const menu = async (_, res) => {
-    try {
-        const [rows] = await connection.promise().query('SELECT * FROM platos');
-        const menu = rows.map(row => ({
-            id: row.id,
-            precio: row.precio
-        }));
-        res.status(200).json(menu);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            msg: "Error al obtener el menú"
-        });
-    }
-};
-
 const getMenu = (_, res) => {
     //mando el menu completo
     console.log(connection)
@@ -134,11 +118,11 @@ async function postPedido(req, res) {
         if (err) {
             console.error(err);
         }
-        conosole.log(response)
+        console.log(response);
         pedidoID = response.insertId;
     });
     for (let i = 0; i < productos.length; i++) {
-        connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, producto[i].id, producto[i].cantidad], (err, _) => {
+        connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, productos[i].id, productos[i].cantidad], (err, _) => {
         if(err) {
             console.error(err);
         }
