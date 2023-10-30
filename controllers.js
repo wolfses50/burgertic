@@ -114,7 +114,7 @@ async function postPedido(req, res) {
         });
     }
     let pedidoID;
-connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
+    connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
     if (err) {
         console.error(err);
         return res.status(500).json({
