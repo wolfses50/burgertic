@@ -5,7 +5,9 @@ const router = require('./router');
 const mysql = require('mysql2');
 
 const app = express();
-const port = 3000;
+const cors = require("cors");
+app.use(cors());
+const port = 9000;
 app.use(express.json());
 app.use(router);
 

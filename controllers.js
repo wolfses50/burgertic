@@ -40,9 +40,9 @@ const getCombos = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json({
+        res.status(200).json(
             result
-        });
+        );
     });
 }
 
