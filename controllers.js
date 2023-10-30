@@ -8,7 +8,7 @@ const getMenu = (_, res) => {
             console.error(err);
         }
         else {
-            res.status(200).json({ result });
+            res.status(200).json(result);
         }
     });
 }
@@ -52,9 +52,9 @@ const getPrincipales = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json({
+        res.status(200).json(
             result
-        });
+        );
     });
 }
 
@@ -64,9 +64,9 @@ const getPostres = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json({
+        res.status(200).json(
             result
-        });
+        );
     });
 }
 
@@ -114,43 +114,66 @@ async function postPedido(req, res) {
         });
     }
     let pedidoID;
-    connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
-        if (err) {
-            console.error(err);
-        }
-        console.log(response);
-        pedidoID = response.insertId;
-    });
+connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
+    if (err) {
+        console.error(err);
+        return res.status(500).json({
+            msg: "Error al crear el pedido",
+        });
+    }
+    console.log(response);
+    pedidoID = response.insertId;
     for (let i = 0; i < productos.length; i++) {
         connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, productos[i].id, productos[i].cantidad], (err, _) => {
-        if(err) {
-            console.error(err);
-        }
-    });
+            if (err) {
+                console.error(err);
+            }
+        });
     }
-
-    return res.status(200).json({
-        msg: "Pedido recibido",
-        precio: precioTotal
-    });
+    return res.status(200).json(pedidoID);
+});
 }
 
 const getPedidos = (req, res) => {
-    //agarro el id que quiero del /:id de los params
+    //tomo el valor id del /:id
     const { id } = req.params;
-    connection.query('SELECT * FROM pedidos WHERE id = ?', [id], (err, result) => {
+
+    connection.query('SELECT pedidos.*, platos.id, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?',[id],  (err, result) => {
         if (err) {
             console.error(err);
+            return res.status(500).json({
+                msg: "Error al buscar los pedidos",
+            
+            });
         }
-        //pido la posicion 0 en el array porque es el unico pedido con ese id
-        if (!result[0]) {
-            res.status(404).json({
+        if (!result || result.length === 0) {
+            return res.status(404).json({
                 msg: "No se ha encontrado el pedido"
             });
-            return;
         }
-        res.status(200).json(result[0]);
+        const pedidos = result.reduce((acc, row) => {
+            const pedido = acc.find(p => p.id === row.id);
+            if (!pedido) {
+                acc.push({
+                    id: row.id,
+                    fecha: row.fecha,
+                    estado: row.estado,
+                    id_usuario: row.id,
+                    platos: [],
+                });
+            }
+            const platos = {
+                id: row.id,
+                nombre: row.nombre,
+                precio: row.precio,
+                cantidad: row.cantidad,
+            };
+            const index = acc.findIndex((p) => p.id === row.id);
+            acc[index].platos.push(platos);
+            return acc;
+        }, []);
+        return res.status(200).json(pedidos);
     });
-}
+};
 //exporto todas las funciones para poder llamarlas desde el router.js
 module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido, getPedidos };
