@@ -121,7 +121,6 @@ async function postPedido(req, res) {
             msg: "Error al crear el pedido",
         });
     }
-    console.log(response);
     pedidoID = response.insertId;
     for (let i = 0; i < productos.length; i++) {
         connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, productos[i].id, productos[i].cantidad], (err, _) => {
@@ -130,7 +129,7 @@ async function postPedido(req, res) {
             }
         });
     }
-    return res.status(200).json(pedidoID);
+    return res.status(200).json( { id: pedidoID } );
 });
 }
 
