@@ -24,9 +24,7 @@ const getMenuItem = (req, res) => {
         }
         //si no existe el item, mando not found
         if (!result[0]) {
-            res.status(404).json({
-                msg: "No se ha encontrado el item"
-            });
+            res.status(404).json({ msg: "No se ha encontrado el item" });
             return;
         }
         //si existe, mando el item
@@ -40,9 +38,7 @@ const getCombos = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json(
-            result
-        );
+        res.status(200).json(result);
     });
 }
 
@@ -52,9 +48,7 @@ const getPrincipales = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json(
-            result
-        );
+        res.status(200).json(result);
     });
 }
 
@@ -64,9 +58,7 @@ const getPostres = (_, res) => {
         if (err) {
             console.error(err);
         }
-        res.status(200).json(
-            result
-        );
+        res.status(200).json(result);
     });
 }
 
@@ -76,9 +68,7 @@ async function postPedido(req, res) {
 
     //Reviso si el array no esta vacio
     if (!productos || !Array.isArray(productos)) {
-        return res.status(400).json({
-            msg: "La solicitud debe incluir un array de productos."
-        });
+        return res.status(400).json({ msg: "La solicitud debe incluir un array de productos." });
     }
 
     //agarro todas las filas de la tabla platos
@@ -115,40 +105,35 @@ async function postPedido(req, res) {
     }
     let pedidoID;
     connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
-    if (err) {
-        console.error(err);
-        return res.status(500).json({
-            msg: "Error al crear el pedido",
-        });
-    }
-    pedidoID = response.insertId;
-    for (let i = 0; i < productos.length; i++) {
-        connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, productos[i].id, productos[i].cantidad], (err, _) => {
-            if (err) {
-                console.error(err);
-            }
-        });
-    }
-    return res.status(200).json( { id: pedidoID } );
-});
+        if (err) {
+            console.error(err);
+            return res.status(500).json({
+                msg: "Error al crear el pedido",
+            });
+        }
+        pedidoID = response.insertId;
+        for (let i = 0; i < productos.length; i++) {
+            connection.query('INSERT INTO pedidos_platos (id_pedido, id_plato, cantidad) VALUES (?, ?, ?)', [pedidoID, productos[i].id, productos[i].cantidad], (err, _) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        }
+        return res.status(200).json({ id: pedidoID });
+    });
 }
 
 const getPedidos = (req, res) => {
     //tomo el valor id del /:id
     const { id } = req.params;
 
-    connection.query('SELECT pedidos.*, platos.id, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?',[id],  (err, result) => {
+    connection.query('SELECT pedidos.*, platos.id, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?', [id], (err, result) => {
         if (err) {
             console.error(err);
-            return res.status(500).json({
-                msg: "Error al buscar los pedidos",
-            
-            });
+            return res.status(500).json({ msg: "Error al buscar los pedidos" });
         }
         if (!result || result.length === 0) {
-            return res.status(404).json({
-                msg: "No se ha encontrado el pedido"
-            });
+            return res.status(404).json({ msg: "No se ha encontrado el pedido" });
         }
         const pedidos = result.reduce((acc, row) => {
             const pedido = acc.find(p => p.id === row.id);
