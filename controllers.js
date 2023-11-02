@@ -127,7 +127,7 @@ const getPedidos = (req, res) => {
     //tomo el valor id del /:id
     const { id } = req.params;
 
-    connection.query('SELECT pedidos.*, platos.id, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?', [id], (err, result) => {
+    connection.query('SELECT pedidos.*, platos.id AS id_plato, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?', [id], (err, result) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ msg: "Error al buscar los pedidos" });
@@ -147,7 +147,7 @@ const getPedidos = (req, res) => {
                 });
             }
             const platos = {
-                id: row.id,
+                id: row.id_plato,
                 nombre: row.nombre,
                 precio: row.precio,
                 cantidad: row.cantidad,
