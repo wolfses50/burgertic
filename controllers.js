@@ -1,4 +1,8 @@
+const { query } = require('express');
+
 const connection = require('./db');
+
+const bcrypt = require('bcrypt');
 
 const getMenu = (_, res) => {
     //mando el menu completo
@@ -159,5 +163,60 @@ const getPedidos = (req, res) => {
         return res.status(200).json(pedidos);
     });
 };
+
+const register = (req, res) => {
+    const usuario = req.body;
+
+    connection.query('SELECT * FROM usuarios WHERE email = ?', [usuario.email], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ msg: "Error buscando el correo en la base de datos" });
+        }
+        if (result.length > 0) {
+            return res.status(400).json({ msg: "El correo ya existe en la base de datos" });
+        }
+        else {
+            let userId;
+            const hashedPassword = bcrypt.hashSync(usuario.password, 10);
+
+            connection.query('INSERT INTO usuarios (nombre, apellido, email, password) VALUES (?, ?, ?, ?)', [usuario.nombre, usuario.apellido, usuario.email, hashedPassword], (err, result) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ msg: "Error al crear el usuario" });
+                }
+                userId = result.insertId;
+                return res.status(200).json({ id: userId });
+            });
+        }
+    });
+
+
+}
+
+const login = (req, res) => {
+    const usuario = req.body;
+
+    connection.query('SELECT * FROM usuarios WHERE email = ?', [usuario.email], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ msg: "Error buscando el correo en la base de datos" });
+        }
+        else if (result.length == 0) {
+            return res.status(401).json( { error: "Usuario o contraseña incorrectos" } );
+        }
+        else {
+            const hashedPassword = result[0].password;
+            const passwordCorrect = bcrypt.compareSync(usuario.password, hashedPassword);
+            console.log(passwordCorrect);
+            if (passwordCorrect) {
+                return res.status(200).json( { id: result[0].id } );
+            }
+            else {
+                return res.status(400).json( { error: "Password incorrect" } );
+            }
+        }
+    });
+}
+
 //exporto todas las funciones para poder llamarlas desde el router.js
-module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido, getPedidos };
+module.exports = { getMenu, getCombos, getMenuItem, getPostres, getPrincipales, postPedido, getPedidos, register, login };
