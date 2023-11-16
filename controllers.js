@@ -156,10 +156,10 @@ const getPedidos = (req, res) => {
                 cantidad: row.cantidad,
             };
             const index = acc.findIndex((p) => p.id === row.id);
-            acc [ index ].platos.push( platos );
+            acc[index].platos.push(platos);
             return acc;
         }, []);
-        return res.status(200).json( pedidos );
+        return res.status(200).json(pedidos);
     });
 };
 
@@ -201,16 +201,16 @@ const login = (req, res) => {
             return res.status(500).json({ msg: "Error buscando el correo en la base de datos" });
         }
         else if (result.length == 0) {
-            return res.status(401).json( { error: "Usuario o contraseña incorrectos" } );
+            return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
         }
         else {
             const hashedPassword = result[0].password;
             const passwordCorrect = bcrypt.compareSync(usuario.password, hashedPassword);
             if (passwordCorrect) {
-                return res.status(200).json( { id: result[0].id } );
+                return res.status(200).json({ id: result[0].id });
             }
             else {
-                return res.status(400).json( { error: "Usuario o contraseña incorrectos" } );
+                return res.status(400).json({ error: "Usuario o contraseña incorrectos" });
             }
         }
     });
