@@ -12,7 +12,7 @@ router.get('/combos', controllers.getCombos);
 router.get('/principales', controllers.getPrincipales);
 router.get('/postres', controllers.getPostres);
 router.post('/pedido', controllers.postPedido);
-router.get('/pedidos/:id', controllers.getPedidos);
+router.get('/pedidos', controllers.getPedidos);
 router.post('/usuarios', controllers.register);
 router.post('/login', controllers.login);
 

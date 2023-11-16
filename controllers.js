@@ -1,5 +1,3 @@
-const { query } = require('express');
-
 const connection = require('./db');
 
 const bcrypt = require('bcrypt');
@@ -69,6 +67,7 @@ const getPostres = (_, res) => {
 async function postPedido(req, res) {
     //llamo lo que me llego de la request como un array de productos
     const { productos } = req.body;
+    const userId = req.headers.authorization;
 
     //Reviso si el array no esta vacio
     if (!productos || !Array.isArray(productos)) {
@@ -108,7 +107,7 @@ async function postPedido(req, res) {
         });
     }
     let pedidoID;
-    connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [1, new Date()], (err, response) => {
+    connection.query('INSERT INTO pedidos (id_usuario, fecha) VALUES (?, ?)', [userId, new Date()], (err, response) => {
         if (err) {
             console.error(err);
             return res.status(500).json({
@@ -129,7 +128,7 @@ async function postPedido(req, res) {
 
 const getPedidos = (req, res) => {
     //tomo el valor id del /:id
-    const { id } = req.params;
+    const id = req.headers.authorization;
 
     connection.query('SELECT pedidos.*, platos.id AS id_plato, platos.nombre, platos.precio, pedidos_platos.cantidad FROM pedidos JOIN pedidos_platos ON pedidos_platos.id_pedido = pedidos.id JOIN platos ON pedidos_platos.id_plato = platos.id WHERE pedidos.id_usuario = ?', [id], (err, result) => {
         if (err) {
@@ -157,10 +156,10 @@ const getPedidos = (req, res) => {
                 cantidad: row.cantidad,
             };
             const index = acc.findIndex((p) => p.id === row.id);
-            acc[index].platos.push(platos);
+            acc [ index ].platos.push( platos );
             return acc;
         }, []);
-        return res.status(200).json(pedidos);
+        return res.status(200).json( pedidos );
     });
 };
 
@@ -207,12 +206,11 @@ const login = (req, res) => {
         else {
             const hashedPassword = result[0].password;
             const passwordCorrect = bcrypt.compareSync(usuario.password, hashedPassword);
-            console.log(passwordCorrect);
             if (passwordCorrect) {
                 return res.status(200).json( { id: result[0].id } );
             }
             else {
-                return res.status(400).json( { error: "Password incorrect" } );
+                return res.status(400).json( { error: "Usuario o contraseña incorrectos" } );
             }
         }
     });
